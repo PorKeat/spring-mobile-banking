@@ -32,6 +32,7 @@ public class Account {
     @Column(nullable = false)
     private Boolean isDeleted;
 
+    //unidirectional
     @ManyToOne
     @JoinColumn(name = "cus_id",referencedColumnName = "id") //rename column & Optional: reference primary key of customer table
     private Customer customer; //customer_id

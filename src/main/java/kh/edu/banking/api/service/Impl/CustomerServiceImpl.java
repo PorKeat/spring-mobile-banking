@@ -3,6 +3,8 @@ package kh.edu.banking.api.service.Impl;
 import kh.edu.banking.api.domain.Customer;
 import kh.edu.banking.api.dto.CreateCustomerRequest;
 import kh.edu.banking.api.dto.CustomerResponse;
+import kh.edu.banking.api.dto.UpdateCustomerRequest;
+import kh.edu.banking.api.mapper.CustomerMapper;
 import kh.edu.banking.api.repository.CustomerRepository;
 import kh.edu.banking.api.service.CustomerService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.List;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CustomerMapper customerMapper;
 
     @Override
     public CustomerResponse createNew(CreateCustomerRequest createCustomerRequest) {
@@ -36,12 +39,7 @@ public class CustomerServiceImpl implements CustomerService {
                     "Phone number already exists");
         }
 
-        Customer customer = new Customer();
-        customer.setFullName(createCustomerRequest.fullName());
-        customer.setGender(createCustomerRequest.gender());
-        customer.setEmail(createCustomerRequest.email());
-        customer.setPhoneNumber(createCustomerRequest.phoneNumber());
-        customer.setRemark(createCustomerRequest.remark());
+        Customer customer = customerMapper.toCustomer(createCustomerRequest);
         customer.setIsDeleted(false);
         customer.setAccounts(new ArrayList<>());
 
@@ -51,34 +49,59 @@ public class CustomerServiceImpl implements CustomerService {
 
         log.info("Customer after save: {}", customer.getId());
 
-        return CustomerResponse.builder()
-                .fullName(customer.getFullName())
-                .gender(customer.getGender())
-                .email(customer.getEmail())
-                .build();
+        return customerMapper.fromCustomer(customer);
     }
 
     @Override
     public List<CustomerResponse> findAll() {
         List<Customer> customers = customerRepository.findAll();
         return customers.stream()
-                .map(customer -> CustomerResponse.builder()
-                        .fullName(customer.getFullName())
-                        .gender(customer.getGender())
-                        .email(customer.getEmail())
-                        .build())
+                .map(customerMapper::fromCustomer)
                 .toList();
     }
 
     @Override
     public CustomerResponse findByPhoneNumber(String phoneNumber) {
         return customerRepository.findByPhoneNumber(phoneNumber)
-                .map(c->CustomerResponse.builder()
-                        .fullName(c.getFullName())
-                        .gender(c.getGender())
-                        .email(c.getEmail())
-                        .build())
-                .orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND,"Phone number not found"));
+                .map(customerMapper::fromCustomer)
+                .orElseThrow(()->new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Customer phone number not found"
+                ));
+    }
+
+    @Override
+    public CustomerResponse updateByPhoneNumber(String phoneNumber, UpdateCustomerRequest updateCustomerRequest) {
+
+        Customer customer = customerRepository
+                .findByPhoneNumber(phoneNumber)
+                .orElseThrow(()->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Customer phonenumber not found")
+                );
+
+        /* If we dont use MapStruct we can use the following code
+        if (updateCustomerRequest.fullName() != null){
+            customer.setFullName(updateCustomerRequest.fullName());
+        } */
+
+        customerMapper.toCustomerPartially(updateCustomerRequest,customer);
+        customer = customerRepository.save(customer);
+
+        return customerMapper.fromCustomer(customer);
+    }
+
+    @Override
+    public void deleteByPhoneNumber(String phoneNumber) {
+        Customer customer = customerRepository
+                .findByPhoneNumber(phoneNumber)
+                .orElseThrow(()->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Customer phonenumber not found")
+                );
+        customerRepository.delete(customer);
     }
 
 }
