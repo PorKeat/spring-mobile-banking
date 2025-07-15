@@ -72,12 +72,13 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountResponse update(String accountNumber, UpdateAccountRequest request) {
+    public AccountResponse update(String accountNumber, UpdateAccountRequest updateAccountRequest) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Account not found"));
 
-        accountMapper.toAccountPartially(request, account);
-        return accountMapper.fromAccount(accountRepository.save(account));
+        accountMapper.toAccountPartially(updateAccountRequest, account);
+        account = accountRepository.save(account);
+        return accountMapper.fromAccount(account);
     }
 
     @Override

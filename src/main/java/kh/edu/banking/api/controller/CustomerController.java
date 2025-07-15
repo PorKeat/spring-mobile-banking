@@ -19,6 +19,12 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
+    @PutMapping("/disable/{phoneNumber}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void disableByPhoneNumber(@PathVariable String phoneNumber){
+        customerService.disableByPhoneNumber(phoneNumber);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CustomerResponse createNew(@Valid @RequestBody CreateCustomerRequest createCustomerRequest){

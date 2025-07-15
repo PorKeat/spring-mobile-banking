@@ -13,5 +13,6 @@ public record AccountResponse(
         BigDecimal balance,
         String accountTypeName,
         String customerName,
-        String customerEmail
+        String customerEmail,
+        Boolean isDeleted
 ) {}

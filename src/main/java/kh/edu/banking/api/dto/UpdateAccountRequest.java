@@ -4,6 +4,5 @@ import java.math.BigDecimal;
 
 public record UpdateAccountRequest(
         String accountCurrency,
-        BigDecimal balance,
-        Integer accountTypeId
+        BigDecimal balance
 ) {}
