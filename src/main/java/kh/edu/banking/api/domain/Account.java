@@ -32,6 +32,9 @@ public class Account {
     @Column(nullable = false)
     private Boolean isDeleted;
 
+    @Column(nullable = false)
+    private BigDecimal overLimit;
+
     @ManyToOne
     @JoinColumn(name = "cus_id",referencedColumnName = "id") //rename column & Optional: reference primary key of customer table
     private Customer customer; //customer_id
@@ -45,5 +48,6 @@ public class Account {
     @ManyToOne
     @JoinColumn(name = "acc_type_id")
     private AccountType accountType;
+
 
 }

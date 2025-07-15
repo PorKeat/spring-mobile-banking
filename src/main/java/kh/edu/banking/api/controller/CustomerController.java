@@ -7,7 +7,6 @@ import kh.edu.banking.api.dto.UpdateCustomerRequest;
 import kh.edu.banking.api.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +17,12 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
+
+
+    @PutMapping("/verify/{customerId}")
+    public void verifyKyc(@PathVariable Integer customerId) {
+        customerService.verifyKyc(customerId);
+    }
 
     @PutMapping("/disable/{phoneNumber}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -40,6 +45,7 @@ public class CustomerController {
     public CustomerResponse findByPhoneNumber(@PathVariable String phoneNumber) {
         return customerService.findByPhoneNumber(phoneNumber);
     }
+
 
     @PatchMapping("/{phoneNumber}")
     public CustomerResponse updateByPhoneNumber(@PathVariable String phoneNumber,@RequestBody UpdateCustomerRequest updateCustomerRequest){

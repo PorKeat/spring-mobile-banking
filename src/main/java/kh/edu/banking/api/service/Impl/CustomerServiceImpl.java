@@ -1,11 +1,15 @@
 package kh.edu.banking.api.service.Impl;
 
 import kh.edu.banking.api.domain.Customer;
+import kh.edu.banking.api.domain.CustomerSegment;
+import kh.edu.banking.api.domain.KYC;
 import kh.edu.banking.api.dto.CreateCustomerRequest;
 import kh.edu.banking.api.dto.CustomerResponse;
 import kh.edu.banking.api.dto.UpdateCustomerRequest;
 import kh.edu.banking.api.mapper.CustomerMapper;
 import kh.edu.banking.api.repository.CustomerRepository;
+import kh.edu.banking.api.repository.CustomerSegmentRepository;
+import kh.edu.banking.api.repository.KYCRepository;
 import kh.edu.banking.api.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +27,9 @@ import java.util.List;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
+    private final CustomerSegmentRepository customerSegmentRepository;
     private final CustomerMapper customerMapper;
+    private final KYCRepository kycRepository;
 
     @Transactional
     @Override
@@ -35,32 +41,45 @@ public class CustomerServiceImpl implements CustomerService {
         customerRepository.disableByPhoneNumber(phoneNumber);
     }
 
-    @Override
     public CustomerResponse createNew(CreateCustomerRequest createCustomerRequest) {
-
-        //validate email
-        if(customerRepository.existsByEmail(createCustomerRequest.email())){
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Email already exists");
+        if (customerRepository.existsByEmail(createCustomerRequest.email())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
         }
 
-        //validate phone number
-        if(customerRepository.existsByPhoneNumber(createCustomerRequest.phoneNumber())){
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Phone number already exists");
+        if (customerRepository.existsByPhoneNumber(createCustomerRequest.phoneNumber())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Phone number already exists");
         }
+
+        CustomerSegment segment = customerSegmentRepository.findById(createCustomerRequest.segmentId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Segment not found"));
 
         Customer customer = customerMapper.toCustomer(createCustomerRequest);
+        customer.setSegment(segment);
         customer.setIsDeleted(false);
         customer.setAccounts(new ArrayList<>());
 
-        log.info("Customer before save: {}", customer.getId());
+        KYC kyc = new KYC();
+        kyc.setNationalCardId(createCustomerRequest.nationalCardId());
+        kyc.setIsVerified(false);
+        kyc.setIsDeleted(false);
+        kyc.setCustomer(customer);
+        customer.setKyc(kyc);
 
         customer = customerRepository.save(customer);
-
-        log.info("Customer after save: {}", customer.getId());
-
         return customerMapper.fromCustomer(customer);
+    }
+
+    @Override
+    public void verifyKyc(Integer customerId) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+
+        if (customer.getKyc() == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "KYC not found for this customer");
+        }
+
+        customer.getKyc().setIsVerified(true);
+        kycRepository.save(customer.getKyc());
     }
 
     @Override

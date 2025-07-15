@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -31,18 +32,23 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponse createNew(CreateAccountRequest createAccountRequest) {
         if (accountRepository.existsByAccountNumber(createAccountRequest.accountNumber())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Account number already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Account number already exists");
         }
+
         Customer customer = customerRepository.findById(createAccountRequest.customerId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Customer not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
 
         AccountType accountType = accountTypeRepository.findById(createAccountRequest.accountTypeId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Account type not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account type not found"));
 
         Account account = accountMapper.toAccount(createAccountRequest);
         account.setCustomer(customer);
         account.setAccountType(accountType);
         account.setIsDeleted(false);
+
+        // Set overLimit based on Customer Segment
+        String segmentName = customer.getSegment().getName();
+        account.setOverLimit(getOverLimitBySegment(segmentName));
 
         Account saved = accountRepository.save(account);
         return accountMapper.fromAccount(saved);
@@ -95,5 +101,15 @@ public class AccountServiceImpl implements AccountService {
         account.setIsDeleted(true);
         return accountMapper.fromAccount(accountRepository.save(account));
     }
+
+    @Override
+    public BigDecimal getOverLimitBySegment(String segmentName) {
+        return switch (segmentName.toUpperCase()) {
+            case "GOLD" -> BigDecimal.valueOf(50000);
+            case "SILVER" -> BigDecimal.valueOf(10000);
+            default -> BigDecimal.valueOf(5000);
+        };
+    }
+
 
 }

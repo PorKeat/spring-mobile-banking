@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface CustomerService {
 
+    void verifyKyc(Integer customerId);
+
     void disableByPhoneNumber(String phoneNumber);
 
     void deleteByPhoneNumber(String phoneNumber);

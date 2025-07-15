@@ -4,10 +4,7 @@ import kh.edu.banking.api.domain.Customer;
 import kh.edu.banking.api.dto.CreateCustomerRequest;
 import kh.edu.banking.api.dto.CustomerResponse;
 import kh.edu.banking.api.dto.UpdateCustomerRequest;
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface CustomerMapper {
@@ -25,6 +22,8 @@ public interface CustomerMapper {
     // return type is converted/target data
     // parameter is source data
     CustomerResponse fromCustomer(Customer customer);
+
+    @Mapping(target = "kyc", ignore = true)
     Customer toCustomer(CreateCustomerRequest createCustomerRequest);
 
 }

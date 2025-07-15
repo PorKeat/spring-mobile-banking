@@ -14,8 +14,15 @@ public class KYC {
 
     @Id
     private Integer id; // UUID
+
+    @Column(unique = true, nullable = false, length = 50)
     private String nationalCardId;
+
+
+    @Column(nullable = false)
     private Boolean isVerified;
+
+    @Column(nullable = false)
     private Boolean isDeleted;
 
     @OneToOne
