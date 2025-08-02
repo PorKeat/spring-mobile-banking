@@ -82,6 +82,17 @@ public class MediaServiceImpl implements MediaService {
     @Override
     public ResponseEntity<Resource> downloadByName(String fileNameWithExt) {
         Path path = Paths.get(serverPath + fileNameWithExt);
+        int lastIndex = fileNameWithExt.lastIndexOf(".");
+        String name = fileNameWithExt.substring(0, lastIndex);
+        String extension = fileNameWithExt.substring(lastIndex + 1);
+
+        Media mediaFile = mediaRepository.findByNameAndExtension(name, extension)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File metadata not found."));
+
+        if (mediaFile.getIsDeleted()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "File has been deleted.");
+        }
+
         if (!Files.exists(path)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found.");
         }

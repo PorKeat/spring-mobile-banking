@@ -47,16 +47,18 @@ public class KeycloakSecurityConfig {
                 .requestMatchers(HttpMethod.GET,"/api/v1/customers/**").hasAnyRole(ROLE_ADMIN,ROLE_STAFF,ROLE_CUSTOMER)
                 .requestMatchers("/api/v1/accounts/**").hasAnyRole(ROLE_ADMIN,ROLE_STAFF,ROLE_CUSTOMER)
                 .requestMatchers("/media/**").permitAll()
+                .requestMatchers("/api/v1/medias/download/**").permitAll()
                 .anyRequest()
                 .authenticated()
         );
 
         // set security mechanism
-        http.httpBasic(Customizer.withDefaults());
-
-        // disable form login of web
         http.oauth2ResourceServer(oauth2->
                 oauth2.jwt(Customizer.withDefaults()));
+
+        // disable form login of web
+        http.formLogin(AbstractHttpConfigurer::disable);
+
 
         // CSRF common protection -> CSRF token
 //        http.csrf(token -> token.disable());
